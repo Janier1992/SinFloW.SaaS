@@ -45,9 +45,9 @@ export function Navbar() {
                             <Image
                                 src={`${prefix}/sinflow-logo.jpg`}
                                 alt="SynFlow Logo"
-                                width={32}
-                                height={32}
-                                className="w-8 h-8 object-contain"
+                                width={48}
+                                height={48}
+                                className="w-12 h-12 rounded-full object-cover"
                             />
                             <span>SynFlow</span>
                         </Link>
