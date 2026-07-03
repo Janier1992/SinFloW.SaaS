@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Motor agentico / AI Coding tools (no subir al repositorio)
+/proyectIA-vibe-coding/
+/Project AI by Coding/
+/project-ai-by-coding/

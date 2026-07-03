@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Rocket } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -70,7 +70,17 @@ export function Navbar() {
                         </div>
                     </div>
 
-                    <div className="md:hidden">
+                    <div className="md:hidden flex items-center gap-1">
+                        <button
+                            onClick={() => {
+                                window.dispatchEvent(new Event("open_admin_portal"));
+                            }}
+                            className="text-gray-300 hover:text-white p-2"
+                            title="Portal Administrativo"
+                            aria-label="Portal Administrativo"
+                        >
+                            <Settings className="h-5 w-5" />
+                        </button>
                         <button
                             onClick={() => setIsOpen(!isOpen)}
                             className="text-gray-300 hover:text-white p-2"

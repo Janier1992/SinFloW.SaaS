@@ -1,47 +1,40 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Quote } from "lucide-react";
-
-// Helper for GitHub Pages prefix if needed, though usually handled differently. 
-// Assuming standard Next.js image handling for external URLs or public folder.
-// Using placeholders for now.
-
-const testimonials = [
-    {
-        content: "SynFlow IA transformó completamente nuestra gestión de datos. La implementación de IA nos ahorró un 40% en costos operativos.",
-        author: "Carlos Rodriguez",
-        role: "CEO, TechSolutions",
-        image: "https://randomuser.me/api/portraits/men/32.jpg"
-    },
-    {
-        content: "La automatización de nuestros procesos de venta fue impecable. El equipo entendió perfectamente nuestras necesidades.",
-        author: "Ana Martinez",
-        role: "Directora Comercial, InnovaCorp",
-        image: "https://randomuser.me/api/portraits/women/44.jpg"
-    },
-    {
-        content: "Profesionalismo y tecnología de punta. Su consultoría estratégica nos permitió escalar a nuevos mercados.",
-        author: "David Gomez",
-        role: "CTO, FinTech Latam",
-        image: "https://randomuser.me/api/portraits/men/86.jpg"
-    },
-    {
-        content: "Increíble atención al detalle y un diseño de software robusto. Definitivamente nuestros aliados tecnológicos.",
-        author: "Sofia Perez",
-        role: "Product Owner, E-Commerce Pro",
-        image: "https://randomuser.me/api/portraits/women/68.jpg"
-    },
-    {
-        content: "La integración de sus soluciones de software a medida ha sido un cambio radical para nuestra productividad.",
-        author: "Jorge L. Ramirez",
-        role: "COO, Logistica Global",
-        image: "https://randomuser.me/api/portraits/men/11.jpg"
-    }
-];
+import { getApprovedTestimonials, Testimonial } from "@/lib/adminState";
 
 export function Testimonials() {
+    const [testimonialsList, setTestimonialsList] = useState<Testimonial[]>([]);
+
+    const loadTestimonials = async () => {
+        try {
+            const data = await getApprovedTestimonials();
+            setTestimonialsList(data);
+        } catch (err) {
+            console.error("Error al cargar testimonios:", err);
+        }
+    };
+
+    useEffect(() => {
+        // Fetch testimonials after initial render tick to prevent cascading render warnings
+        const timer = setTimeout(() => {
+            loadTestimonials();
+        }, 0);
+
+        // Listen for admin changes to testimonials
+        const handleStateUpdate = () => {
+            loadTestimonials();
+        };
+        window.addEventListener("crm_state_updated", handleStateUpdate);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener("crm_state_updated", handleStateUpdate);
+        };
+    }, []);
+
     return (
         <section id="testimonios" className="py-24 relative overflow-hidden">
             {/* Background Gradients */}
@@ -75,16 +68,22 @@ export function Testimonials() {
                 <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-sinflow-primary z-10" />
 
                 <div className="flex overflow-hidden">
-                    <TranslateWrapper>
-                        {testimonials.map((testimonial, i) => (
-                            <TestimonialCard key={i} {...testimonial} />
-                        ))}
-                    </TranslateWrapper>
-                    <TranslateWrapper>
-                        {testimonials.map((testimonial, i) => (
-                            <TestimonialCard key={`clone-${i}`} {...testimonial} />
-                        ))}
-                    </TranslateWrapper>
+                    {testimonialsList.length === 0 ? (
+                        <div className="w-full text-center py-8 text-gray-500 italic">No hay testimonios aprobados para mostrar.</div>
+                    ) : (
+                        <>
+                            <TranslateWrapper>
+                                {testimonialsList.map((testimonial, i) => (
+                                    <TestimonialCard key={testimonial.id || i} {...testimonial} />
+                                ))}
+                            </TranslateWrapper>
+                            <TranslateWrapper>
+                                {testimonialsList.map((testimonial, i) => (
+                                    <TestimonialCard key={`clone-${testimonial.id || i}`} {...testimonial} />
+                                ))}
+                            </TranslateWrapper>
+                        </>
+                    )}
                 </div>
             </div>
         </section>
@@ -113,7 +112,7 @@ function TestimonialCard({ content, author, role, image }: { content: string, au
         <div className="w-[350px] sm:w-[450px] p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-sinflow-secondary/30 transition-colors flex-shrink-0 flex flex-col justify-between">
             <div className="mb-6">
                 <Quote className="w-10 h-10 text-sinflow-secondary/50 mb-4" />
-                <p className="text-lg text-gray-300 italic leading-relaxed">"{content}"</p>
+                <p className="text-lg text-gray-300 italic leading-relaxed">&ldquo;{content}&rdquo;</p>
             </div>
 
             <div className="flex items-center gap-4">

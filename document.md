@@ -40,7 +40,7 @@ Diseñamos "empleados virtuales" alimentados por IA capaces de mantener contexto
 
 En SynFlow IA no escribimos código a ciegas; operamos bajo una metodología iterativa y consultiva:
 
-1. **Discovery & Auditoría Gratuita:** Entendemos a fondo las dolencias del negocio, mapeamos el proceso actual y calculamos el posible ahorro en horas/dólares.
+1. **Discovery & Auditoría Gratuita:** Entendemos a fondo las dolencias del negocio, mapeamos el proceso actual y calculamos el posible ahorro en horas/dinero.
 2. **Arquitectura y Diseño de Sistemas:** Diseñamos el diagrama de la solución asegurando que se integre perfectamente con las herramientas que la empresa ya usa.
 3. **Desarrollo Iterativo:** Construcción y entrenamiento de los modelos de IA y código con validación continua del cliente.
 4. **Despliegue Cero-Riesgo:** Implementación paralela sin interrumpir la operación normal de la empresa.

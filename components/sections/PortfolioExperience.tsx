@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import QRCode from "react-qr-code";
-import { ExternalLink, Smartphone, Zap, Lock, Globe, Activity, Store, ShoppingBag } from "lucide-react";
+import { ExternalLink, Zap, Activity, Store, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 const portfolioItems = [

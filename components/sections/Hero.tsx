@@ -3,13 +3,16 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { HummingbirdNeuralNetwork } from "@/components/ui/HummingbirdNeuralNetwork";
 
 export function Hero() {
     const shouldReduceMotion = useReducedMotion();
 
     return (
         <section id="hero" className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+            {/* El colibrí neuronal interactivo */}
+            <HummingbirdNeuralNetwork />
+
             {/* Background Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-sinflow-secondary/20 rounded-full blur-[120px]" />
@@ -24,7 +27,7 @@ export function Hero() {
                     className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sinflow-secondary text-sm font-medium mb-8 backdrop-blur-sm"
                 >
                     <Sparkles className="w-4 h-4" />
-                    <span>Innovación y Tecnología desde Medellín</span>
+                    <span>Innovación y tecnología a la medida</span>
                 </motion.div>
 
                 <motion.h1
@@ -72,8 +75,7 @@ export function Hero() {
                 </motion.div>
             </div>
 
-            {/* Grid Pattern Overlay */}
-            <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+
         </section>
     );
 }

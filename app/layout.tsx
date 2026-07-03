@@ -5,6 +5,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ChatWidget } from "@/components/ui/ChatWidget";
+import { AdminPortal } from "@/components/ui/AdminPortal";
 
 // Asegurando explícitamente el subset 'latin' para optimizar peso (Recomendación)
 const geistSans = Geist({
@@ -57,6 +58,7 @@ export default function RootLayout({
           {children}
         </main>
         <ChatWidget />
+        <AdminPortal />
         <Footer />
         <Analytics />
       </body>

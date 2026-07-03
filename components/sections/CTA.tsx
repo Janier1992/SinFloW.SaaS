@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Loader2, AlertCircle } from "lucide-react";
+import { addLead } from "@/lib/adminState";
 
 export function CTA() {
     const [formState, setFormState] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -19,28 +20,44 @@ export function CTA() {
             const phone = formData.get("phone") as string;
             const company = formData.get("company") as string | null;
             const service = formData.get("service") as string;
-            const city = formData.get("city") as string;
+            const description = formData.get("description") as string;
 
-            // Simular proceso breve
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Enviar datos usando nuestro Proxy interno para evitar bloqueos de CORS
-            const response = await fetch("/api/webhook", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, phone, company, service, city })
+            // Sincronizar lead con el gestor de estado (Supabase / LocalStorage)
+            await addLead({
+                name,
+                email,
+                phone,
+                company: company || undefined,
+                service,
+                description
             });
 
-            const data = await response.json();
+            // Disparar envíos de correo en segundo plano (asíncronos) para optimizar la velocidad del usuario
+            fetch("/api/send-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "new_lead",
+                    to: "synflow.ia@gmail.com",
+                    data: { name, email, phone, company: company || undefined, service, description }
+                })
+            }).catch(err => console.error("Error enviando correo del lead:", err));
 
-            if (!response.ok) {
-                throw new Error(data.error || "Error al conectar con el servidor.");
-            }
+            fetch("/api/send-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "client_confirm",
+                    to: email,
+                    data: { name, service }
+                })
+            }).catch(err => console.error("Error enviando confirmación al cliente:", err));
 
             setFormState("success");
-        } catch (error: any) {
+        } catch (error: unknown) {
             setFormState("error");
-            setErrorMessage(error.message || "Ocurrió un error inesperado al enviar los datos.");
+            const message = error instanceof Error ? error.message : "Ocurrió un error inesperado al enviar los datos.";
+            setErrorMessage(message);
         }
     };
 
@@ -174,9 +191,10 @@ export function CTA() {
                                             name="service"
                                             id="service"
                                             required
+                                            defaultValue=""
                                             className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all cursor-pointer [&>option]:bg-gray-900 [&>option]:text-white"
                                         >
-                                            <option value="" disabled selected>Selecciona un servicio...</option>
+                                            <option value="" disabled>Selecciona un servicio...</option>
                                             <option value="Consultoría e Inteligencia Artificial">Consultoría e Inteligencia Artificial</option>
                                             <option value="Automatización (RPA & IA)">Automatización Inteligente</option>
                                             <option value="Analítica de Datos & BI">Analítica de Datos & BI</option>
@@ -186,14 +204,14 @@ export function CTA() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1.5">Ciudad</label>
+                                        <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1.5">Descripción del Servicio</label>
                                         <input
                                             type="text"
-                                            name="city"
-                                            id="city"
+                                            name="description"
+                                            id="description"
                                             required
                                             className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all"
-                                            placeholder="Medellín"
+                                            placeholder="Detalla brevemente tu requerimiento..."
                                         />
                                     </div>
                                 </div>

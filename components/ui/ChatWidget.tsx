@@ -117,11 +117,12 @@ export function ChatWidget() {
                 });
             }
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Chat Error:", error);
+            const message = error instanceof Error ? error.message : "Error desconocido.";
             setMessages((prev) => [
                 ...prev,
-                { role: "model", content: "Lo siento, tuve un problema al conectar. " + (error.message || "Error desconocido.") },
+                { role: "model", content: "Lo siento, tuve un problema al conectar. " + message },
             ]);
         } finally {
             setIsLoading(false);

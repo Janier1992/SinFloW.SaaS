@@ -46,7 +46,7 @@ export function About() {
                                     Nuestro punto de encuentro fue el mismo que hoy conecta al talento global: plataformas profesionales como <strong>LinkedIn</strong>, donde coincidimos no solo por habilidades técnicas, sino por una visión compartida:
                                 </p>
                                 <blockquote className="border-l-4 border-sinflow-secondary pl-4 italic text-gray-400 my-4">
-                                    "Democratizar el acceso a la inteligencia artificial y convertirla en una herramienta real, útil y aplicable para las empresas."
+                                    &ldquo;Democratizar el acceso a la inteligencia artificial y convertirla en una herramienta real, útil y aplicable para las empresas.&rdquo;
                                 </blockquote>
                             </div>
                         </motion.div>

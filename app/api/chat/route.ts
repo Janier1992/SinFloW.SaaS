@@ -129,7 +129,7 @@ export async function POST(req: Request) {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
 
-    } catch (error: Error | any) {
+    } catch (error: unknown) {
         // Sanitización: Log detallado en servidor, mensaje genérico al cliente
         console.error("API Route Chat Error:", error);
         return new Response("Ocurrió un error al procesar la solicitud. Por favor, intenta de nuevo más tarde.", { status: 500 });

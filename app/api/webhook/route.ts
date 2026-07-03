@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         const data = await response.json().catch(() => ({}));
 
         return NextResponse.json({ success: true, data });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error interno en el proxy del Webhook:", error);
         return NextResponse.json(
             { error: "Error de red al intentar conectar con el servidor." },
