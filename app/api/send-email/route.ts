@@ -195,7 +195,8 @@ const getQuoteApprovedHtml = (data: { client: string; services: string; total: n
 `;
 
 // 4. HTML Template for admin user registration confirmation
-const getAdminRegisterHtml = (data: { name: string; email: string }) => `
+// siteUrl is injected at call time so it always reflects the real deployment URL
+const getAdminRegisterHtml = (data: { name: string; email: string }, siteUrl: string) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -205,8 +206,11 @@ const getAdminRegisterHtml = (data: { name: string; email: string }) => `
     .container { max-width: 600px; margin: 20px auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
     .header { background: linear-gradient(135deg, #00E0FF 0%, #7B5CFF 100%); padding: 30px; text-align: center; }
     .header h1 { margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: -0.5px; }
-    .content { padding: 30px; text-align: center; }
+    .content { padding: 30px; }
     .auth-badge { display: inline-block; padding: 6px 12px; background-color: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: #22C55E; font-size: 12px; font-weight: bold; border-radius: 9999px; text-transform: uppercase; margin-bottom: 20px; }
+    .credentials-box { background-color: #0d1321; border: 1px solid #1F2937; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .credentials-box p { margin: 4px 0; font-size: 13px; color: #9CA3AF; }
+    .credentials-box strong { color: #F3F4F6; }
     .footer { text-align: center; padding: 20px; background-color: #0d1321; border-top: 1px solid #1F2937; font-size: 11px; color: #6B7280; }
   </style>
 </head>
@@ -217,22 +221,27 @@ const getAdminRegisterHtml = (data: { name: string; email: string }) => `
     </div>
     <div class="content">
       <span class="auth-badge">Acceso de Administrador Autorizado</span>
-      <p style="margin-top: 0; font-size: 16px; color: #D1D5DB; line-height: 1.5; text-align: left;">
+      <p style="margin-top: 0; font-size: 16px; color: #D1D5DB; line-height: 1.5;">
         Hola, <strong>${data.name}</strong>.
       </p>
-      <p style="font-size: 15px; color: #9CA3AF; line-height: 1.5; text-align: left;">
-        Tu cuenta con el correo electrónico <strong style="color: #00E0FF;">${data.email}</strong> ha sido creada exitosamente y se encuentra **totalmente autorizada** para acceder al Portal Administrativo de **SynFlow IA**.
+      <p style="font-size: 15px; color: #9CA3AF; line-height: 1.5;">
+        Tu cuenta con el correo electrónico <strong style="color: #00E0FF;">${data.email}</strong> ha sido creada exitosamente y se encuentra <strong style="color: #22C55E;">totalmente autorizada</strong> para acceder al Portal Administrativo de <strong style="color: #F3F4F6;">SynFlow IA</strong>.
       </p>
-      <p style="font-size: 15px; color: #9CA3AF; line-height: 1.5; text-align: left;">
-        Ya puedes iniciar sesión en el portal utilizando tus credenciales para gestionar solicitudes de servicios, estimar cotizaciones y moderar testimonios.
+      <p style="font-size: 14px; color: #9CA3AF; line-height: 1.5;">
+        Ya puedes iniciar sesión con tus credenciales para gestionar solicitudes, estimar cotizaciones y moderar testimonios.
       </p>
-      <div style="margin: 30px 0; text-align: center;">
-        <a href="https://synflow.io" style="display: inline-block; background: linear-gradient(135deg, #00E0FF 0%, #7B5CFF 100%); color: #FFFFFF; font-weight: bold; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-size: 14px; box-shadow: 0 4px 10px rgba(0, 224, 255, 0.2);">Ir a SynFlow IA</a>
+      <div class="credentials-box">
+        <p>📧 <strong>Correo:</strong> ${data.email}</p>
+        <p>🔑 <strong>Contraseña:</strong> La que registraste al crear la cuenta</p>
       </div>
+      <div style="margin: 30px 0; text-align: center;">
+        <a href="${siteUrl}?admin=open" style="display: inline-block; background: linear-gradient(135deg, #00E0FF 0%, #7B5CFF 100%); color: #FFFFFF; font-weight: bold; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; box-shadow: 0 4px 10px rgba(0, 224, 255, 0.2);">Ir al Portal de Administración →</a>
+      </div>
+      <p style="font-size: 12px; color: #6B7280; text-align: center;">Si el botón no funciona, copia y pega esta URL en tu navegador:<br><span style="color: #00E0FF;">${siteUrl}</span></p>
     </div>
     <div class="footer">
-      SynFlow IA • Inteligencia Artificial y Automatización en Medellín<br>
-      © ${new Date().getFullYear()} SynFlow. Todos los derechos reservados.
+      SynFlow IA • Inteligencia Artificial y Automatización<br>
+      © ${new Date().getFullYear()} SynFlow IA. Todos los derechos reservados.
     </div>
   </div>
 </body>
@@ -247,6 +256,13 @@ export async function POST(req: Request) {
     if (!type || !to || !data) {
       return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
     }
+
+    // Resolve the real site URL: prefer env var, then derive from request headers (works on Vercel)
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      req.headers.get("origin") ||
+      req.headers.get("referer")?.split("/").slice(0, 3).join("/") ||
+      "https://synflow.io";
 
     // Determine subject and HTML template based on email type
     let htmlContent = "";
@@ -267,7 +283,7 @@ export async function POST(req: Request) {
         break;
       case "admin_register":
         subject = "🔑 Acceso Autorizado al CRM - SynFlow IA";
-        htmlContent = getAdminRegisterHtml(data as { name: string; email: string; });
+        htmlContent = getAdminRegisterHtml(data as { name: string; email: string; }, siteUrl);
         break;
       default:
         return NextResponse.json({ error: "Tipo de correo inválido" }, { status: 400 });

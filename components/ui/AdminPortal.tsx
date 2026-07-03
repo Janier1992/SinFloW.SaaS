@@ -188,6 +188,15 @@ export function AdminPortal() {
     };
     window.addEventListener("crm_state_updated", handleUpdate);
 
+    // Auto-open portal if URL contains ?admin=open (e.g. from confirmation email button)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("admin") === "open") {
+      setIsOpen(true);
+      // Clean up the URL parameter without reloading the page
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, "", cleanUrl);
+    }
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("open_admin_portal", handleOpenPortal);
