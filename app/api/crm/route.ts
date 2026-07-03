@@ -1,199 +1,268 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Server-side Supabase client — uses env vars directly (no NEXT_PUBLIC_ prefix issues)
+// Server-side Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "";
 
-const getSupabase = () => {
+function getSupabase() {
   if (!supabaseUrl || !supabaseKey) return null;
   return createClient(supabaseUrl, supabaseKey);
-};
+}
+
+// Helper to return consistent error responses
+const err = (msg: string, status = 400) =>
+  NextResponse.json({ error: msg }, { status });
+
+// Row mappers
+const leadToDb = (d: Record<string, unknown>) => ({
+  name: d.name,
+  email: d.email,
+  phone: d.phone,
+  company: d.company || null,
+  service: d.service,
+  description: d.description,
+  status: (d.status as string) || "Nuevo",
+  rating: d.rating != null ? Number(d.rating) : null,
+});
+
+const quoteToDb = (d: Record<string, unknown>) => ({
+  lead_id: d.leadId || d.lead_id || null,
+  client: d.client,
+  services: d.services,
+  hours_engineering: Number(d.hoursEngineering ?? d.hours_engineering ?? 0),
+  hours_architecture: Number(d.hoursArchitecture ?? d.hours_architecture ?? 0),
+  hours_development: Number(d.hoursDevelopment ?? d.hours_development ?? 0),
+  rate_engineering: Number(d.rateEngineering ?? d.rate_engineering ?? 0),
+  rate_architecture: Number(d.rateArchitecture ?? d.rate_architecture ?? 0),
+  rate_development: Number(d.rateDevelopment ?? d.rate_development ?? 0),
+  subtotal: Number(d.subtotal ?? 0),
+  tax: Number(d.tax ?? 19),
+  total: Number(d.total ?? 0),
+  status: (d.status as string) || "Pendiente",
+});
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { action, data } = body;
-
   const supabase = getSupabase();
   if (!supabase) {
-    return NextResponse.json({ error: "Supabase no configurado" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Supabase no configurado. Verifica NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY." },
+      { status: 500 }
+    );
   }
+
+  let body: { action: string; data: Record<string, unknown> };
+  try {
+    body = await req.json();
+  } catch {
+    return err("JSON inválido en el cuerpo de la petición", 400);
+  }
+
+  const { action, data = {} } = body;
 
   try {
     switch (action) {
-      // ── LEADS ──────────────────────────────────────────────────
-      case "add_lead": {
-        const { error, data: inserted } = await supabase
-          .from("leads")
-          .insert([{
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            company: data.company || null,
-            service: data.service,
-            description: data.description,
-            status: "Nuevo",
-            rating: 5,
-          }])
-          .select()
-          .single();
-        if (error) {
-          console.error("[CRM API] Error al insertar lead:", error);
-          return NextResponse.json({ error: error.message, code: error.code }, { status: 400 });
-        }
-        return NextResponse.json({ success: true, data: inserted });
-      }
+      // ══════════════════════════════════════
+      // LEADS
+      // ══════════════════════════════════════
 
       case "get_leads": {
-        const { data: leads, error } = await supabase
+        const { data: rows, error } = await supabase
           .from("leads")
           .select("*")
           .order("created_at", { ascending: false });
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-        return NextResponse.json({ success: true, data: leads });
+        if (error) return err(error.message);
+        return NextResponse.json({ data: rows ?? [] });
+      }
+
+      case "add_lead": {
+        const { data: inserted, error } = await supabase
+          .from("leads")
+          .insert([leadToDb(data)])
+          .select()
+          .single();
+        if (error) {
+          console.error("[CRM add_lead]", error);
+          return err(error.message);
+        }
+        return NextResponse.json({ data: inserted });
       }
 
       case "update_lead": {
         const { error } = await supabase
           .from("leads")
-          .update({
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            company: data.company || null,
-            service: data.service,
-            description: data.description,
-            status: data.status,
-            rating: data.rating || null,
-          })
-          .eq("id", data.id);
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+          .update(leadToDb(data))
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
+        return NextResponse.json({ success: true });
+      }
+
+      case "update_lead_status": {
+        const { error } = await supabase
+          .from("leads")
+          .update({ status: data.status })
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
         return NextResponse.json({ success: true });
       }
 
       case "delete_lead": {
-        const { error } = await supabase.from("leads").delete().eq("id", data.id);
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+        const { error } = await supabase
+          .from("leads")
+          .delete()
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
         return NextResponse.json({ success: true });
       }
 
-      // ── QUOTES ─────────────────────────────────────────────────
-      case "add_quote": {
-        const { error, data: inserted } = await supabase
-          .from("quotes")
-          .insert([{
-            lead_id: data.leadId || null,
-            client: data.client,
-            services: data.services,
-            hours_engineering: data.hoursEngineering,
-            hours_architecture: data.hoursArchitecture,
-            hours_development: data.hoursDevelopment,
-            rate_engineering: data.rateEngineering,
-            rate_architecture: data.rateArchitecture,
-            rate_development: data.rateDevelopment,
-            subtotal: data.subtotal,
-            tax: data.tax,
-            total: data.total,
-            status: data.status || "Pendiente",
-          }])
-          .select()
-          .single();
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-        return NextResponse.json({ success: true, data: inserted });
-      }
+      // ══════════════════════════════════════
+      // QUOTES
+      // ══════════════════════════════════════
 
       case "get_quotes": {
-        const { data: quotes, error } = await supabase
+        const { data: rows, error } = await supabase
           .from("quotes")
           .select("*")
           .order("created_at", { ascending: false });
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-        return NextResponse.json({ success: true, data: quotes });
+        if (error) return err(error.message);
+        return NextResponse.json({ data: rows ?? [] });
+      }
+
+      case "add_quote": {
+        const { data: inserted, error } = await supabase
+          .from("quotes")
+          .insert([quoteToDb(data)])
+          .select()
+          .single();
+        if (error) {
+          console.error("[CRM add_quote]", error);
+          return err(error.message);
+        }
+        // Update lead status to Cotizado if leadId is provided
+        if (data.leadId || data.lead_id) {
+          const leadId = (data.leadId || data.lead_id) as string;
+          await supabase.from("leads").update({ status: "Cotizado" }).eq("id", leadId);
+        }
+        return NextResponse.json({ data: inserted });
       }
 
       case "update_quote": {
         const { error } = await supabase
           .from("quotes")
-          .update({
-            client: data.client,
-            services: data.services,
-            hours_engineering: data.hoursEngineering,
-            hours_architecture: data.hoursArchitecture,
-            hours_development: data.hoursDevelopment,
-            rate_engineering: data.rateEngineering,
-            rate_architecture: data.rateArchitecture,
-            rate_development: data.rateDevelopment,
-            subtotal: data.subtotal,
-            tax: data.tax,
-            total: data.total,
-            status: data.status,
-          })
-          .eq("id", data.id);
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+          .update(quoteToDb(data))
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
+        return NextResponse.json({ success: true });
+      }
+
+      case "update_quote_status": {
+        const { error } = await supabase
+          .from("quotes")
+          .update({ status: data.status })
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
         return NextResponse.json({ success: true });
       }
 
       case "delete_quote": {
-        const { error } = await supabase.from("quotes").delete().eq("id", data.id);
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+        const { error } = await supabase
+          .from("quotes")
+          .delete()
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
         return NextResponse.json({ success: true });
       }
 
-      // ── TESTIMONIALS ────────────────────────────────────────────
+      // ══════════════════════════════════════
+      // TESTIMONIALS
+      // ══════════════════════════════════════
+
+      case "get_testimonials": {
+        const { data: rows, error } = await supabase
+          .from("testimonials")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) return err(error.message);
+        return NextResponse.json({ data: rows ?? [] });
+      }
+
+      case "get_approved_testimonials": {
+        const { data: rows, error } = await supabase
+          .from("testimonials")
+          .select("*")
+          .eq("approved", true)
+          .order("created_at", { ascending: false });
+        if (error) return err(error.message);
+        return NextResponse.json({ data: rows ?? [] });
+      }
+
       case "add_testimonial": {
-        const { error, data: inserted } = await supabase
+        const { data: inserted, error } = await supabase
           .from("testimonials")
           .insert([{
             author: data.author,
             role: data.role || "Cliente",
             content: data.content,
             image: data.image || "https://randomuser.me/api/portraits/men/1.jpg",
-            approved: false, // Requires admin approval
-            rating: data.rating || 5,
+            approved: false,
+            rating: Number(data.rating) || 5,
             service: data.service || "Otro / Contacto General",
           }])
           .select()
           .single();
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-        return NextResponse.json({ success: true, data: inserted });
-      }
-
-      case "get_testimonials": {
-        const { data: testimonials, error } = await supabase
-          .from("testimonials")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-        return NextResponse.json({ success: true, data: testimonials });
+        if (error) return err(error.message);
+        return NextResponse.json({ data: inserted });
       }
 
       case "toggle_testimonial": {
+        // Fetch current state then flip it
         const { data: current, error: fetchErr } = await supabase
           .from("testimonials")
           .select("approved")
-          .eq("id", data.id)
+          .eq("id", data.id as string)
           .single();
-        if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 400 });
+        if (fetchErr) return err(fetchErr.message);
         const { error } = await supabase
           .from("testimonials")
           .update({ approved: !current.approved })
-          .eq("id", data.id);
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-        return NextResponse.json({ success: true });
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
+        return NextResponse.json({ success: true, approved: !current.approved });
       }
 
       case "delete_testimonial": {
-        const { error } = await supabase.from("testimonials").delete().eq("id", data.id);
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+        const { error } = await supabase
+          .from("testimonials")
+          .delete()
+          .eq("id", data.id as string);
+        if (error) return err(error.message);
         return NextResponse.json({ success: true });
       }
 
-      // ── ADMIN USERS ─────────────────────────────────────────────
+      // ══════════════════════════════════════
+      // ADMIN USERS
+      // ══════════════════════════════════════
+
       case "register_admin": {
         const { error } = await supabase
           .from("admin_users")
-          .insert([{ name: data.name, email: data.email, password: data.password }]);
-        if (error) return NextResponse.json({ error: error.message, code: error.code }, { status: 400 });
+          .insert([{
+            name: data.name,
+            email: data.email,
+            password: data.password,
+          }]);
+        if (error) {
+          if (error.code === "23505") {
+            return NextResponse.json(
+              { error: "El correo electrónico ya se encuentra registrado." },
+              { status: 409 }
+            );
+          }
+          return err(error.message);
+        }
         return NextResponse.json({ success: true });
       }
 
@@ -201,18 +270,32 @@ export async function POST(req: NextRequest) {
         const { data: user, error } = await supabase
           .from("admin_users")
           .select("id")
-          .eq("email", data.email)
-          .eq("password", data.password)
+          .eq("email", data.email as string)
+          .eq("password", data.password as string)
           .maybeSingle();
-        if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+        if (error) return err(error.message);
         return NextResponse.json({ success: !!user });
       }
 
+      // ══════════════════════════════════════
+      // QUOTE EMAIL (server-side send for admin portal)
+      // ══════════════════════════════════════
+
+      case "get_lead_email": {
+        const { data: lead, error } = await supabase
+          .from("leads")
+          .select("email, name")
+          .eq("id", data.leadId as string)
+          .maybeSingle();
+        if (error) return err(error.message);
+        return NextResponse.json({ data: lead });
+      }
+
       default:
-        return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 });
+        return NextResponse.json({ error: `Acción desconocida: '${action}'` }, { status: 400 });
     }
-  } catch (err) {
-    console.error("[CRM API] Error inesperado:", err);
+  } catch (unexpected) {
+    console.error("[CRM API] Error inesperado:", unexpected);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

@@ -11,7 +11,7 @@ import {
   getCRMConfig, saveCRMConfig, Lead, Quote, 
   Testimonial, CRMConfig, addQuote, deleteLead, deleteQuote, 
   toggleTestimonialApproval, deleteTestimonial, registerAdminUser, verifyAdminCredentials,
-  updateLead, updateQuote, clearLocalCRMCache
+  updateLead, updateQuote, updateLeadStatus, updateQuoteStatus, clearLocalCRMCache
 } from "@/lib/adminState";
 import Image from "next/image";
 
@@ -133,8 +133,11 @@ export function AdminPortal() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setIsOpen(false); // Close the portal completely — return to landing page
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("synflow_admin_auth");
+      // Scroll back to top of landing page
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -352,8 +355,37 @@ export function AdminPortal() {
 
   // Handle quote email notification via API
   const handleSendEmailSimulation = async (q: Quote) => {
-    const associatedLead = leads.find(l => l.id === q.leadId || l.name === q.client || l.company === q.client);
-    const clientEmail = associatedLead?.email || "cliente@ejemplo.com";
+    // Try to find the client email from local leads first
+    let clientEmail = "";
+    let clientName = q.client;
+
+    const associatedLead = leads.find(
+      (l) => l.id === q.leadId || l.name === q.client || l.company === q.client
+    );
+
+    if (associatedLead) {
+      clientEmail = associatedLead.email;
+      clientName = associatedLead.name;
+    } else if (q.leadId) {
+      // Fallback: query the server for the lead email
+      try {
+        const res = await fetch("/api/crm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get_lead_email", data: { leadId: q.leadId } }),
+        });
+        const json = await res.json();
+        if (json.data) {
+          clientEmail = json.data.email;
+          clientName = json.data.name || q.client;
+        }
+      } catch { /* ignore */ }
+    }
+
+    if (!clientEmail) {
+      alert("No se encontró el correo del cliente asociado a esta cotización.\nEdita el lead y verifica que tenga un correo registrado.");
+      return;
+    }
 
     try {
       const response = await fetch("/api/send-email", {
@@ -363,24 +395,24 @@ export function AdminPortal() {
           type: "quote_approved",
           to: clientEmail,
           data: {
-            client: q.client,
+            client: clientName,
             services: q.services,
-            total: q.total
-          }
-        })
+            total: q.total,
+          },
+        }),
       });
 
       const resData = await response.json();
-      
       if (response.ok) {
-        alert(`Cotización enviada exitosamente a ${q.client} (${clientEmail}).\n${resData.simulated || resData.mocked ? "[Simulado] Detalles impresos en logs del servidor." : "[Enviado] Correo entregado."}`);
-        
-        // Update quote status to Proceso and sync with Supabase
-        const updatedQuote = { ...q, status: "Proceso" as const };
-        await updateQuote(updatedQuote);
+        alert(
+          `✅ Cotización enviada a ${clientName} (${clientEmail}).\n` +
+          (resData.simulated ? "[Simulado] Verifica los logs del servidor." : "[Enviado] Correo entregado correctamente.")
+        );
+        // Mark quote as Proceso after sending
+        await updateQuoteStatus(q.id, "Proceso");
         await reloadCRMState();
       } else {
-        alert(`Error al enviar cotización: ${resData.error || "Error desconocido"}`);
+        alert(`❌ Error al enviar: ${resData.error || "Error desconocido"}`);
       }
     } catch (err) {
       console.error(err);
