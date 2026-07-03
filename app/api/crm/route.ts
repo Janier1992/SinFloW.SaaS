@@ -247,34 +247,31 @@ export async function POST(req: NextRequest) {
       // ══════════════════════════════════════
 
       case "register_admin": {
-        const { error } = await supabase
-          .from("admin_users")
-          .insert([{
-            name: data.name,
-            email: data.email,
-            password: data.password,
-          }]);
+        const { data: authData, error } = await supabase.auth.signUp({
+          email: data.email as string,
+          password: data.password as string,
+          options: {
+            data: {
+              name: data.name as string,
+            },
+            emailRedirectTo: "https://synflow-ia.vercel.app/?admin=open",
+          },
+        });
         if (error) {
-          if (error.code === "23505") {
-            return NextResponse.json(
-              { error: "El correo electrónico ya se encuentra registrado." },
-              { status: 409 }
-            );
-          }
           return err(error.message);
         }
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, user: authData.user });
       }
 
       case "verify_admin": {
-        const { data: user, error } = await supabase
-          .from("admin_users")
-          .select("id")
-          .eq("email", data.email as string)
-          .eq("password", data.password as string)
-          .maybeSingle();
-        if (error) return err(error.message);
-        return NextResponse.json({ success: !!user });
+        const { data: authData, error } = await supabase.auth.signInWithPassword({
+          email: data.email as string,
+          password: data.password as string,
+        });
+        if (error) {
+          return err(error.message);
+        }
+        return NextResponse.json({ success: !!authData.user, user: authData.user });
       }
 
       // ══════════════════════════════════════

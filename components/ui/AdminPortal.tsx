@@ -75,6 +75,8 @@ export function AdminPortal() {
           sessionStorage.setItem("synflow_admin_auth", "true");
         }
         setLoginError("");
+        // Load fresh CRM data immediately after login
+        setTimeout(() => reloadCRMState(), 0);
       } else {
         setLoginError("Credenciales incorrectas. Por favor, intenta de nuevo.");
       }
@@ -97,31 +99,13 @@ export function AdminPortal() {
     try {
       const res = await registerAdminUser(registerName, loginEmail, loginPassword);
       if (res.success) {
-        // Enviar el correo de confirmación de registro de administrador
-        try {
-          await fetch("/api/send-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: "admin_register",
-              to: loginEmail,
-              data: {
-                name: registerName,
-                email: loginEmail
-              }
-            })
-          });
-        } catch (emailErr) {
-          console.error("Error al enviar correo de confirmación:", emailErr);
-        }
-
-        alert("¡Cuenta creada con éxito! Se ha enviado una confirmación a tu correo. Ya puedes iniciar sesión con tus credenciales.");
+        alert("¡Cuenta creada con éxito! Si la confirmación por correo está activa en tu consola de Supabase, por favor confirma tu cuenta en el correo electrónico recibido antes de iniciar sesión. De lo contrario, ya puedes iniciar sesión inmediatamente.");
         setAuthMode("login");
         setLoginPassword("");
         setRegisterName("");
         setLoginError("");
       } else {
-        setLoginError(res.error || "El correo electrónico ya se encuentra registrado.");
+        setLoginError(res.error || "El correo electrónico ya se encuentra registrado o la contraseña es muy débil.");
       }
     } catch (err) {
       console.error(err);

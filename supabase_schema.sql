@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS quotes CASCADE;
 DROP TABLE IF EXISTS leads CASCADE;
 DROP TABLE IF EXISTS testimonials CASCADE;
 DROP TABLE IF EXISTS crm_config CASCADE;
-DROP TABLE IF EXISTS admin_users CASCADE;
 
 -- Tabla de Leads (Solicitudes de clientes desde el formulario)
 CREATE TABLE leads (
@@ -74,15 +73,6 @@ CREATE TABLE crm_config (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL
 );
 
--- Tabla de Usuarios Administradores
-CREATE TABLE admin_users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL
-);
-
 -- ============================================================
 -- PASO 2: DESHABILITAR RLS + POLÍTICAS ABIERTAS
 -- ============================================================
@@ -91,18 +81,15 @@ ALTER TABLE leads DISABLE ROW LEVEL SECURITY;
 ALTER TABLE quotes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE testimonials DISABLE ROW LEVEL SECURITY;
 ALTER TABLE crm_config DISABLE ROW LEVEL SECURITY;
-ALTER TABLE admin_users DISABLE ROW LEVEL SECURITY;
 
 -- Políticas de seguridad (por si Supabase fuerza RLS)
 CREATE POLICY "leads_all" ON leads FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "quotes_all" ON quotes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "testimonials_all" ON testimonials FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "crm_config_all" ON crm_config FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "admin_users_select" ON admin_users FOR SELECT USING (true);
-CREATE POLICY "admin_users_insert" ON admin_users FOR INSERT WITH CHECK (true);
 
 -- ============================================================
--- PASO 3: DATOS MÍNIMOS NECESARIOS (solo config y admin)
+-- PASO 3: DATOS MÍNIMOS NECESARIOS (solo config)
 -- NO se insertan leads, quotes ni testimonios de prueba.
 -- La landing page empezará con datos reales desde cero.
 -- ============================================================
@@ -118,13 +105,8 @@ ON CONFLICT (id) DO UPDATE SET
     notification_email = EXCLUDED.notification_email,
     email_active = EXCLUDED.email_active;
 
--- Usuario Administrador predeterminado (puedes cambiar la contraseña después)
-INSERT INTO admin_users (name, email, password)
-VALUES ('Administrador SynFlow', 'admin@synflow.io', 'admin123')
-ON CONFLICT (email) DO NOTHING;
-
 -- ====================================================================
 -- LISTO. Las tablas están vacías y listas para datos reales.
--- Accede al portal con: admin@synflow.io / admin123
--- O registra tu propio usuario desde la pantalla de login del portal.
+-- Los administradores se registran y gestionan en la pestaña
+-- "Authentication" en la consola de Supabase.
 -- ====================================================================
