@@ -262,7 +262,7 @@ export async function POST(req: Request) {
       process.env.NEXT_PUBLIC_SITE_URL ||
       req.headers.get("origin") ||
       req.headers.get("referer")?.split("/").slice(0, 3).join("/") ||
-      "https://synflow.io";
+      "https://synflow-ia.vercel.app";
 
     // Determine subject and HTML template based on email type
     let htmlContent = "";
@@ -294,7 +294,7 @@ export async function POST(req: Request) {
     const pass = process.env.SMTP_PASSWORD;
     const host = process.env.SMTP_HOST || (user ? "smtp.gmail.com" : undefined);
     const port = parseInt(process.env.SMTP_PORT || "465");
-    const from = process.env.SMTP_FROM || (user ? `"SynFlow IA" <${user}>` : '"SynFlow IA" <no-reply@synflow.io>');
+    const from = process.env.SMTP_FROM || (user ? `"SynFlow IA" <${user}>` : '"SynFlow IA" <no-reply@synflow-ia.vercel.app>');
 
     // Check if real SMTP configurations are provided
     if (host && user && pass) {
