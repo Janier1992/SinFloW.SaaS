@@ -23,7 +23,7 @@ export function CTA() {
             const description = formData.get("description") as string;
 
             // Sincronizar lead con el gestor de estado (Supabase / LocalStorage)
-            await addLead({
+            const newLead = await addLead({
                 name,
                 email,
                 phone,
@@ -31,6 +31,10 @@ export function CTA() {
                 service,
                 description
             });
+
+            if (!newLead) {
+                throw new Error("No se pudo guardar la solicitud en el CRM. Por favor, verifica la conexión o intenta más tarde.");
+            }
 
             // Disparar envíos de correo en segundo plano (asíncronos) para optimizar la velocidad del usuario
             fetch("/api/send-email", {
