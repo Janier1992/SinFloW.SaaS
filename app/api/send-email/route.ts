@@ -14,6 +14,14 @@ interface EmailRequest {
     description?: string;
     client?: string;
     services?: string;
+    hoursEngineering?: number;
+    hoursArchitecture?: number;
+    hoursDevelopment?: number;
+    rateEngineering?: number;
+    rateArchitecture?: number;
+    rateDevelopment?: number;
+    subtotal?: number;
+    tax?: number;
     total?: number;
   };
 }
@@ -135,33 +143,51 @@ const getClientConfirmHtml = (data: { name: string; service: string }) => `
       <div style="text-align: center;">
         <a href="https://wa.me/573044769593?text=Hola,%20quisiera%20saber%20el%20estado%20de%20mi%20solicitud%20en%20SynFlow" class="button">Hablar con un Asesor en Directo</a>
       </div>
-    </div>
-    <div class="footer">
-      SynFlow IA • Inteligencia Artificial y Automatización en Medellín<br>
-      © ${new Date().getFullYear()} SynFlow. Todos los derechos reservados.
-    </div>
   </div>
 </body>
 </html>
 `;
 
-// 3. HTML Template for notifying the client that their quote has been approved/sent
-const getQuoteApprovedHtml = (data: { client: string; services: string; total: number }) => `
+// 3. HTML Template for notifying the client that their quote has been approved/sent with a detailed commercial proposal breakdown
+const getQuoteApprovedHtml = (data: {
+  client: string;
+  services: string;
+  hoursEngineering: number;
+  hoursArchitecture: number;
+  hoursDevelopment: number;
+  rateEngineering: number;
+  rateArchitecture: number;
+  rateDevelopment: number;
+  subtotal: number;
+  tax: number;
+  total: number;
+}) => {
+  const formatCOP = (val: number) =>
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      maximumFractionDigits: 0
+    }).format(val);
+
+  return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <style>
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F8FAFC; color: #334155; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 30px auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .container { max-width: 650px; margin: 30px auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
     .header { background: linear-gradient(135deg, #0A0F1C 0%, #1E293B 100%); padding: 40px 30px; text-align: center; }
     .header h1 { margin: 0; color: #00E0FF; font-size: 26px; font-weight: bold; }
     .content { padding: 35px 30px; line-height: 1.6; }
-    .price-box { text-align: center; background-color: rgba(0, 224, 255, 0.05); border: 1px dashed #00E0FF; border-radius: 12px; padding: 25px; margin: 25px 0; }
-    .price-box span { font-size: 12px; font-weight: bold; color: #64748B; text-transform: uppercase; letter-spacing: 1px; }
-    .price-box h2 { font-size: 32px; font-weight: 900; color: #0F172A; margin: 5px 0 0 0; font-family: monospace; }
-    .button { display: inline-block; background-color: #22C55E; color: #FFFFFF !important; font-weight: bold; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-size: 14px; text-align: center; }
-    .footer { text-align: center; padding: 20px; background-color: #0A0F1C; font-size: 11px; color: #94A3B8; }
+    .proposal-title { color: #0F172A; font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; }
+    .item-table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 14px; }
+    .item-table th { background-color: #0A0F1C; color: #FFFFFF; text-align: left; padding: 12px; font-weight: bold; }
+    .item-table td { padding: 12px; border-bottom: 1px solid #E2E8F0; color: #475569; }
+    .item-table tr.total-row td { font-weight: bold; background-color: #F8FAFC; color: #0F172A; }
+    .item-table tr.grand-total-row td { font-weight: bold; background-color: rgba(0, 224, 255, 0.05); color: #0088CC; font-size: 16px; border-top: 2px solid #00E0FF; }
+    .button { display: inline-block; background-color: #22C55E; color: #FFFFFF !important; font-weight: bold; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-size: 14px; text-align: center; box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2); }
+    .footer { text-align: center; padding: 25px; background-color: #0A0F1C; font-size: 11px; color: #94A3B8; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -171,28 +197,77 @@ const getQuoteApprovedHtml = (data: { client: string; services: string; total: n
     </div>
     <div class="content">
       <h2 style="color: #0F172A; font-size: 18px; margin-top: 0;">Estimado cliente de ${data.client},</h2>
-      <p>Nos complace informarte que hemos finalizado la estimación comercial de los servicios de ingeniería solicitados.</p>
-      <p>Tu propuesta detallada para <strong>${data.services}</strong> ya está configurada en nuestro portal y lista para iniciar ejecución.</p>
+      <p>Nos complace informarte que hemos finalizado la estimación comercial detallada de los servicios tecnológicos solicitados.</p>
+      <p>Tu propuesta detallada para el servicio <strong>${data.services}</strong> ya está configurada en nuestro sistema. A continuación se desglosa el presupuesto técnico estimado para el desarrollo del proyecto:</p>
       
-      <div class="price-box">
-        <span>Presupuesto Comercial Estimado (Con Impuesto)</span>
-        <h2>${new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(data.total)}</h2>
-      </div>
+      <div class="proposal-title">Desglose Comercial del Proyecto</div>
+      
+      <table class="item-table">
+        <thead>
+          <tr>
+            <th>Rol / Servicio Técnico</th>
+            <th style="text-align: center;">Horas</th>
+            <th style="text-align: right;">Tarifa / Hora</th>
+            <th style="text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.hoursEngineering > 0 ? `
+          <tr>
+            <td>Ingeniería de Inteligencia Artificial (RPA, LLMs, NLP)</td>
+            <td style="text-align: center;">${data.hoursEngineering} h</td>
+            <td style="text-align: right;">${formatCOP(data.rateEngineering)}</td>
+            <td style="text-align: right; font-weight: bold;">${formatCOP(data.hoursEngineering * data.rateEngineering)}</td>
+          </tr>
+          ` : ""}
+          ${data.hoursArchitecture > 0 ? `
+          <tr>
+            <td>Arquitectura Cloud & Ingeniería de Datos (Supabase, AWS)</td>
+            <td style="text-align: center;">${data.hoursArchitecture} h</td>
+            <td style="text-align: right;">${formatCOP(data.rateArchitecture)}</td>
+            <td style="text-align: right; font-weight: bold;">${formatCOP(data.hoursArchitecture * data.rateArchitecture)}</td>
+          </tr>
+          ` : ""}
+          ${data.hoursDevelopment > 0 ? `
+          <tr>
+            <td>Desarrollo Frontend / Backend de Aplicación a Medida</td>
+            <td style="text-align: center;">${data.hoursDevelopment} h</td>
+            <td style="text-align: right;">${formatCOP(data.rateDevelopment)}</td>
+            <td style="text-align: right; font-weight: bold;">${formatCOP(data.hoursDevelopment * data.rateDevelopment)}</td>
+          </tr>
+          ` : ""}
+          
+          <tr class="total-row">
+            <td colspan="3" style="text-align: right;">Subtotal Neto:</td>
+            <td style="text-align: right;">${formatCOP(data.subtotal)}</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="3" style="text-align: right;">Impuesto IVA (${data.tax}%):</td>
+            <td style="text-align: right;">${formatCOP(data.total - data.subtotal)}</td>
+          </tr>
+          <tr class="grand-total-row">
+            <td colspan="3" style="text-align: right;">Presupuesto Total Estimado:</td>
+            <td style="text-align: right;">${formatCOP(data.total)}</td>
+          </tr>
+        </tbody>
+      </table>
 
-      <p style="margin-bottom: 30px;">Para avanzar con la planeación de sprints y el inicio de desarrollo técnico, por favor confirma tu aprobación respondiendo a este correo o contactando a tu director de cuenta directamente por WhatsApp.</p>
+      <p style="margin-top: 25px; margin-bottom: 30px;">Para proceder con la planificación de sprints de desarrollo e inicio técnico, por favor confirma tu aprobación haciendo clic en el siguiente botón o respondiendo directamente a este correo.</p>
       
       <div style="text-align: center;">
-        <a href="https://wa.me/573044769593?text=Hola,%20he%20recibido%20el%20presupuesto%20por%20${data.total}%20y%20quiero%20iniciar%20el%20servicio" class="button">Aprobar e Iniciar Desarrollo</a>
+        <a href="https://wa.me/573044769593?text=Hola,%20he%20recibido%20el%20presupuesto%20desglosado%20por%20${formatCOP(data.total)}%20y%20quiero%20aprobarlo%20para%20iniciar%20desarrollo" class="button">Aprobar e Iniciar Desarrollo</a>
       </div>
     </div>
     <div class="footer">
       SynFlow IA • Inteligencia Artificial y Automatización en Medellín<br>
-      © ${new Date().getFullYear()} SynFlow. Todos los derechos reservados.
+      Este es un presupuesto comercial válido por 30 días a partir de su emisión.<br>
+      © ${new Date().getFullYear()} SynFlow IA. Todos los derechos reservados.
     </div>
   </div>
 </body>
 </html>
 `;
+};
 
 // 4. HTML Template for admin user registration confirmation
 // siteUrl is injected at call time so it always reflects the real deployment URL
@@ -279,7 +354,19 @@ export async function POST(req: Request) {
         break;
       case "quote_approved":
         subject = "💼 Presupuesto Comercial Estimado - SynFlow IA";
-        htmlContent = getQuoteApprovedHtml(data as { client: string; services: string; total: number; });
+        htmlContent = getQuoteApprovedHtml(data as {
+          client: string;
+          services: string;
+          hoursEngineering: number;
+          hoursArchitecture: number;
+          hoursDevelopment: number;
+          rateEngineering: number;
+          rateArchitecture: number;
+          rateDevelopment: number;
+          subtotal: number;
+          tax: number;
+          total: number;
+        });
         break;
       case "admin_register":
         subject = "🔑 Acceso Autorizado al CRM - SynFlow IA";

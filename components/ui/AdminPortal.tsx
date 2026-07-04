@@ -381,6 +381,14 @@ export function AdminPortal() {
           data: {
             client: clientName,
             services: q.services,
+            hoursEngineering: q.hoursEngineering,
+            hoursArchitecture: q.hoursArchitecture,
+            hoursDevelopment: q.hoursDevelopment,
+            rateEngineering: q.rateEngineering,
+            rateArchitecture: q.rateArchitecture,
+            rateDevelopment: q.rateDevelopment,
+            subtotal: q.subtotal,
+            tax: q.tax,
             total: q.total,
           },
         }),
@@ -828,12 +836,16 @@ export function AdminPortal() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {leads.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="p-8 text-center text-gray-500">No hay solicitudes de clientes registradas.</td>
-                        </tr>
-                      ) : (
-                        leads.map((lead) => (
+                      {(() => {
+                        const visibleLeads = leads.filter(lead => lead.status !== "Cotizado");
+                        if (visibleLeads.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={6} className="p-8 text-center text-gray-500">No hay solicitudes de clientes activas (leads pendientes).</td>
+                            </tr>
+                          );
+                        }
+                        return visibleLeads.map((lead) => (
                           <tr key={lead.id} className="hover:bg-white/5 transition-colors">
                             <td className="p-4">
                               <div className="font-semibold text-white">{lead.name}</div>
@@ -895,8 +907,8 @@ export function AdminPortal() {
                               </button>
                             </td>
                           </tr>
-                        ))
-                      )}
+                        ));
+                      })()}
                     </tbody>
                   </table>
                 </div>
