@@ -17,17 +17,22 @@ export function Testimonials() {
     const [isLoading, setIsLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [imageInput, setImageInput] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setErrorMessage("");
+        
+        // Use custom image URL if provided, otherwise default to a clean placeholder
+        const finalImage = imageInput.trim() || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 90) + 1}.jpg`;
+
         try {
             const result = await addTestimonial({
                 author,
                 role,
                 content,
-                image: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 90) + 1}.jpg`,
+                image: finalImage,
                 rating,
                 service
             });
@@ -36,6 +41,7 @@ export function Testimonials() {
                 setAuthor("");
                 setRole("");
                 setContent("");
+                setImageInput("");
                 setRating(5);
             } else {
                 setErrorMessage("No se pudo guardar tu testimonio. Inténtalo de nuevo más tarde.");
@@ -213,6 +219,19 @@ export function Testimonials() {
                                         placeholder="Ej. Gerente de Tecnología, Ruta N"
                                         className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm"
                                     />
+                                </div>
+
+                                <div>
+                                    <label htmlFor="opinion-image" className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Enlace de tu Foto o Logotipo (Opcional)</label>
+                                    <input
+                                        type="url"
+                                        id="opinion-image"
+                                        value={imageInput}
+                                        onChange={(e) => setImageInput(e.target.value)}
+                                        placeholder="Ej. https://miweb.com/mi-foto.jpg (LinkedIn, Twitter, etc.)"
+                                        className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-1">Si lo dejas vacío, el sistema generará una foto de perfil aleatoria por defecto.</p>
                                 </div>
 
                                 <div>
