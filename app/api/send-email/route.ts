@@ -183,7 +183,7 @@ const getQuoteApprovedHtml = (data: {
     .proposal-title { color: #0F172A; font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; }
     .item-table { width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 14px; }
     .item-table th { background-color: #0A0F1C; color: #FFFFFF; text-align: left; padding: 12px; font-weight: bold; }
-    .item-table td { padding: 12px; border-bottom: 1px solid #E2E8F0; color: #475569; }
+    .item-table td { padding: 14px 12px; border-bottom: 1px solid #E2E8F0; }
     .item-table tr.total-row td { font-weight: bold; background-color: #F8FAFC; color: #0F172A; }
     .item-table tr.grand-total-row td { font-weight: bold; background-color: rgba(0, 224, 255, 0.05); color: #0088CC; font-size: 16px; border-top: 2px solid #00E0FF; }
     .button { display: inline-block; background-color: #22C55E; color: #FFFFFF !important; font-weight: bold; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-size: 14px; text-align: center; box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2); }
@@ -205,48 +205,55 @@ const getQuoteApprovedHtml = (data: {
       <table class="item-table">
         <thead>
           <tr>
-            <th>Rol / Servicio Técnico</th>
-            <th style="text-align: center;">Horas</th>
-            <th style="text-align: right;">Tarifa / Hora</th>
-            <th style="text-align: right;">Total</th>
+            <th>Concepto / Desglose del Servicio</th>
+            <th style="text-align: right; width: 120px;">Total</th>
           </tr>
         </thead>
         <tbody>
           ${data.hoursEngineering > 0 ? `
           <tr>
-            <td>Ingeniería de Inteligencia Artificial (RPA, LLMs, NLP)</td>
-            <td style="text-align: center;">${data.hoursEngineering} h</td>
-            <td style="text-align: right;">${formatCOP(data.rateEngineering)}</td>
-            <td style="text-align: right; font-weight: bold;">${formatCOP(data.hoursEngineering * data.rateEngineering)}</td>
+            <td>
+              <div style="font-weight: bold; color: #0F172A;">Ingeniería de Inteligencia Artificial</div>
+              <div style="font-size: 12px; color: #64748B; margin-top: 4px;">RPA, LLMs, NLP • ${data.hoursEngineering} horas &times; ${formatCOP(data.rateEngineering)} / h</div>
+            </td>
+            <td style="text-align: right; font-weight: bold; color: #0F172A; vertical-align: middle;">
+              ${formatCOP(data.hoursEngineering * data.rateEngineering)}
+            </td>
           </tr>
           ` : ""}
           ${data.hoursArchitecture > 0 ? `
           <tr>
-            <td>Arquitectura Cloud & Ingeniería de Datos (Supabase, AWS)</td>
-            <td style="text-align: center;">${data.hoursArchitecture} h</td>
-            <td style="text-align: right;">${formatCOP(data.rateArchitecture)}</td>
-            <td style="text-align: right; font-weight: bold;">${formatCOP(data.hoursArchitecture * data.rateArchitecture)}</td>
+            <td>
+              <div style="font-weight: bold; color: #0F172A;">Arquitectura Cloud & Ingeniería de Datos</div>
+              <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Supabase, AWS • ${data.hoursArchitecture} horas &times; ${formatCOP(data.rateArchitecture)} / h</div>
+            </td>
+            <td style="text-align: right; font-weight: bold; color: #0F172A; vertical-align: middle;">
+              ${formatCOP(data.hoursArchitecture * data.rateArchitecture)}
+            </td>
           </tr>
           ` : ""}
           ${data.hoursDevelopment > 0 ? `
           <tr>
-            <td>Desarrollo Frontend / Backend de Aplicación a Medida</td>
-            <td style="text-align: center;">${data.hoursDevelopment} h</td>
-            <td style="text-align: right;">${formatCOP(data.rateDevelopment)}</td>
-            <td style="text-align: right; font-weight: bold;">${formatCOP(data.hoursDevelopment * data.rateDevelopment)}</td>
+            <td>
+              <div style="font-weight: bold; color: #0F172A;">Desarrollo de Software a Medida</div>
+              <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Frontend & Backend • ${data.hoursDevelopment} horas &times; ${formatCOP(data.rateDevelopment)} / h</div>
+            </td>
+            <td style="text-align: right; font-weight: bold; color: #0F172A; vertical-align: middle;">
+              ${formatCOP(data.hoursDevelopment * data.rateDevelopment)}
+            </td>
           </tr>
           ` : ""}
           
           <tr class="total-row">
-            <td colspan="3" style="text-align: right;">Subtotal Neto:</td>
+            <td style="text-align: right;">Subtotal Neto:</td>
             <td style="text-align: right;">${formatCOP(data.subtotal)}</td>
           </tr>
           <tr class="total-row">
-            <td colspan="3" style="text-align: right;">Impuesto IVA (${data.tax}%):</td>
+            <td style="text-align: right;">Impuesto IVA (${data.tax}%):</td>
             <td style="text-align: right;">${formatCOP(data.total - data.subtotal)}</td>
           </tr>
           <tr class="grand-total-row">
-            <td colspan="3" style="text-align: right;">Presupuesto Total Estimado:</td>
+            <td style="text-align: right;">Presupuesto Total Estimado:</td>
             <td style="text-align: right;">${formatCOP(data.total)}</td>
           </tr>
         </tbody>
