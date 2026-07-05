@@ -10,7 +10,7 @@ import {
   getLeads, getQuotes, getTestimonials, 
   getCRMConfig, saveCRMConfig, Lead, Quote, 
   Testimonial, CRMConfig, addQuote, deleteLead, deleteQuote, 
-  toggleTestimonialApproval, deleteTestimonial, registerAdminUser, verifyAdminCredentials,
+  toggleTestimonialApproval, deleteTestimonial, verifyAdminCredentials,
   updateLead, updateQuote, updateLeadStatus, updateQuoteStatus, clearLocalCRMCache
 } from "@/lib/adminState";
 import Image from "next/image";
@@ -59,8 +59,6 @@ export function AdminPortal() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [registerName, setRegisterName] = useState("");
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -83,33 +81,6 @@ export function AdminPortal() {
     } catch (err) {
       console.error(err);
       setLoginError("Ocurrió un error inesperado al iniciar sesión.");
-    } finally {
-      setIsSubmittingAuth(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!registerName || !loginEmail || !loginPassword) {
-      setLoginError("Por favor, completa todos los campos.");
-      return;
-    }
-    setIsSubmittingAuth(true);
-    setLoginError("");
-    try {
-      const res = await registerAdminUser(registerName, loginEmail, loginPassword);
-      if (res.success) {
-        alert("¡Cuenta creada con éxito! Si la confirmación por correo está activa en tu consola de Supabase, por favor confirma tu cuenta en el correo electrónico recibido antes de iniciar sesión. De lo contrario, ya puedes iniciar sesión inmediatamente.");
-        setAuthMode("login");
-        setLoginPassword("");
-        setRegisterName("");
-        setLoginError("");
-      } else {
-        setLoginError(res.error || "El correo electrónico ya se encuentra registrado o la contraseña es muy débil.");
-      }
-    } catch (err) {
-      console.error(err);
-      setLoginError("Ocurrió un error al crear la cuenta.");
     } finally {
       setIsSubmittingAuth(false);
     }
@@ -474,148 +445,61 @@ export function AdminPortal() {
               <Settings className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-white tracking-tight">
-              {authMode === "login" ? "Acceso Administrativo" : "Crear Cuenta"}
+              Acceso Administrativo
             </h2>
             <p className="text-xs text-gray-400 mt-1.5">
-              {authMode === "login" 
-                ? "Ingresa tus credenciales para administrar SynFlow IA CRM" 
-                : "Regístrate con tu correo para acceder al portal comercial"}
+              Ingresa tus credenciales para administrar SynFlow IA CRM
             </p>
           </div>
 
-          {authMode === "login" ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Correo Electrónico</label>
-                <input 
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  placeholder="admin@synflow.io"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm font-sans"
-                  disabled={isSubmittingAuth}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Contraseña</label>
-                <input 
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm font-sans"
-                  disabled={isSubmittingAuth}
-                />
-              </div>
-
-              {loginError && (
-                <div className="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{loginError}</span>
-                </div>
-              )}
-
-              <button
-                type="submit"
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-1.5">Correo Electrónico</label>
+              <input 
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+                placeholder="admin@synflow.io"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm font-sans"
                 disabled={isSubmittingAuth}
-                className="w-full py-3.5 bg-gradient-to-r from-sinflow-secondary to-sinflow-accent text-white font-bold rounded-xl hover:opacity-95 transition-all text-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isSubmittingAuth ? "Iniciando Sesión..." : "Iniciar Sesión"}
-              </button>
+              />
+            </div>
 
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode("register");
-                    setLoginError("");
-                  }}
-                  className="text-xs text-gray-400 hover:text-sinflow-secondary transition-all"
-                >
-                  ¿No tienes cuenta? <span className="text-sinflow-secondary font-semibold hover:underline">Crear Cuenta</span>
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Nombre Completo</label>
-                <input 
-                  type="text"
-                  value={registerName}
-                  onChange={(e) => setRegisterName(e.target.value)}
-                  required
-                  placeholder="Juan Pérez"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm font-sans"
-                  disabled={isSubmittingAuth}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Correo Electrónico</label>
-                <input 
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  placeholder="juan@ejemplo.com"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm font-sans"
-                  disabled={isSubmittingAuth}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Contraseña</label>
-                <input 
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm font-sans"
-                  disabled={isSubmittingAuth}
-                />
-              </div>
-
-              {loginError && (
-                <div className="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{loginError}</span>
-                </div>
-              )}
-
-              <button
-                type="submit"
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 mb-1.5">Contraseña</label>
+              <input 
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sinflow-secondary/50 transition-all text-sm font-sans"
                 disabled={isSubmittingAuth}
-                className="w-full py-3.5 bg-gradient-to-r from-sinflow-secondary to-sinflow-accent text-white font-bold rounded-xl hover:opacity-95 transition-all text-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isSubmittingAuth ? "Creando Cuenta..." : "Crear Cuenta"}
-              </button>
+              />
+            </div>
 
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode("login");
-                    setLoginError("");
-                  }}
-                  className="text-xs text-gray-400 hover:text-sinflow-secondary transition-all"
-                >
-                  ¿Ya tienes cuenta? <span className="text-sinflow-secondary font-semibold hover:underline">Iniciar Sesión</span>
-                </button>
+            {loginError && (
+              <div className="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{loginError}</span>
               </div>
-            </form>
-          )}
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmittingAuth}
+              className="w-full py-3.5 bg-gradient-to-r from-sinflow-secondary to-sinflow-accent text-white font-bold rounded-xl hover:opacity-95 transition-all text-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isSubmittingAuth ? "Iniciando Sesión..." : "Iniciar Sesión"}
+            </button>
+          </form>
 
           <div className="flex justify-between items-center text-[10px] text-gray-500 pt-4 border-t border-white/5">
             <span>SynFlow IA v1.0</span>
             <button 
               onClick={() => {
                 setIsOpen(false);
-                setAuthMode("login");
               }}
               className="text-sinflow-secondary hover:underline"
             >

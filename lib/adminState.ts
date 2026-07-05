@@ -284,14 +284,11 @@ export const saveTestimonials = async (_testimonials: Testimonial[]): Promise<vo
 // ─────────────────────────────────────────────────────
 
 export const registerAdminUser = async (
-  name: string,
-  email: string,
-  password: string
+  _name: string,
+  _email: string,
+  _password: string
 ): Promise<{ success: boolean; error?: string }> => {
-  const result = await crmFetch("register_admin", { name, email, password });
-  if (result === null) return { success: false, error: "Error al conectar con el servidor." };
-  if (result.error) return { success: false, error: result.error };
-  return { success: true };
+  return { success: false, error: "El registro público de nuevos administradores está inhabilitado por políticas de seguridad de la compañía." };
 };
 
 export const verifyAdminCredentials = async (

@@ -247,20 +247,10 @@ export async function POST(req: NextRequest) {
       // ══════════════════════════════════════
 
       case "register_admin": {
-        const { data: authData, error } = await supabase.auth.signUp({
-          email: data.email as string,
-          password: data.password as string,
-          options: {
-            data: {
-              name: data.name as string,
-            },
-            emailRedirectTo: "https://synflow-ia.vercel.app/?admin=open",
-          },
-        });
-        if (error) {
-          return err(error.message);
-        }
-        return NextResponse.json({ success: true, user: authData.user });
+        return NextResponse.json(
+          { error: "El registro de nuevos administradores está deshabilitado públicamente por motivos de seguridad. Debe registrar nuevos usuarios desde la consola web oficial de Supabase." },
+          { status: 403 }
+        );
       }
 
       case "verify_admin": {
